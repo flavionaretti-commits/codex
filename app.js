@@ -1,0 +1,497 @@
+(() => {
+  "use strict";
+
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+  const main = $("#main");
+  const toastEl = $("#toast");
+  const state = {
+    sound: localStorage.getItem("codex-sound") !== "off",
+    dark: localStorage.getItem("codex-theme") === "dark",
+    currentModule: null
+  };
+
+  const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const FONIC_MAP = {
+    A:"O", O:"A", E:"I", I:"E", B:"P", P:"B", C:"G", G:"C",
+    D:"T", T:"D", F:"V", V:"F", L:"R", R:"L", M:"N", N:"M",
+    S:"Z", Z:"S", Q:"Q", U:"U", H:"H"
+  };
+
+  const MODULES = {
+    caesar: {
+      id:"caesar",
+      title:"Cifrario di Cesare",
+      short:"CESARE",
+      category:"secret",
+      icon:"↻",
+      description:"Sposta ogni lettera dell’alfabeto di un numero fisso di posizioni.",
+      help:`
+        <h2>Cifrario di Cesare</h2>
+        <p>Ogni lettera viene sostituita da quella che si trova un certo numero di posizioni più avanti nell’alfabeto.</p>
+        <p>Con chiave <strong>3</strong>: A→D, B→E, C→F… Per decodificare si esegue lo spostamento opposto.</p>
+        <p>Spazi, numeri e punteggiatura non vengono modificati.</p>
+      `,
+      render: renderCaesar
+    },
+    atbash: {
+      id:"atbash",
+      title:"Cifrario Atbash",
+      short:"ATBASH",
+      category:"secret",
+      icon:"⇄",
+      description:"Sostituisce A con Z, B con Y, C con X e così via.",
+      help:`
+        <h2>Atbash</h2>
+        <p>È un cifrario a sostituzione in cui l’alfabeto viene semplicemente rovesciato.</p>
+        <p>A↔Z, B↔Y, C↔X… È <strong>simmetrico</strong>: la stessa operazione codifica e decodifica.</p>
+      `,
+      render: renderAtbash
+    },
+    fonic: {
+      id:"fonic",
+      title:"Somiglianza fonica",
+      short:"SOMIGLIANZA FONICA",
+      category:"secret",
+      icon:"≈",
+      description:"Scambia coppie di lettere dal suono o articolazione simile.",
+      help:`
+        <h2>Codice di somiglianza fonica</h2>
+        <p>Le lettere vengono scambiate a coppie: A↔O, E↔I, B↔P, C↔G, D↔T, F↔V, L↔R, M↔N, S↔Z.</p>
+        <p>Q, U e H non cambiano. Il codice è <strong>simmetrico</strong>: applicandolo una seconda volta si recupera il testo originale.</p>
+        <p>Esempio: <strong>FLAVIO NARETTI → VROFEA MOLIDDE</strong>.</p>
+      `,
+      render: renderFonic
+    },
+    ascii: {
+      id:"ascii",
+      title:"Codice ASCII",
+      short:"ASCII",
+      category:"code",
+      icon:"01",
+      description:"Rappresenta i caratteri con numeri decimali, binari ed esadecimali.",
+      help:`
+        <h2>ASCII</h2>
+        <p>ASCII assegna un numero a ciascun carattere. Per esempio la lettera A corrisponde a 65 in decimale, 01000001 in binario e 41 in esadecimale.</p>
+        <p>Questa versione mostra i caratteri ASCII standard e permette anche di ricostruire il testo partendo da una sequenza numerica.</p>
+      `,
+      render: renderAscii
+    }
+  };
+
+  function applyTheme() {
+    document.body.classList.toggle("dark", state.dark);
+    $("#themeBtn").textContent = state.dark ? "☀" : "☾";
+    localStorage.setItem("codex-theme", state.dark ? "dark" : "light");
+  }
+
+  function syncSoundIcon() {
+    $("#soundBtn").textContent = state.sound ? "🔊" : "🔇";
+    localStorage.setItem("codex-sound", state.sound ? "on" : "off");
+  }
+
+  let audioCtx;
+  function beep(freq=680, duration=.045, volume=.15) {
+    if (!state.sound) return;
+    try {
+      audioCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + duration);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch {}
+  }
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastEl.classList.remove("show"), 1500);
+  }
+
+  function preserveCase(original, replacement) {
+    return original === original.toLowerCase() ? replacement.toLowerCase() : replacement;
+  }
+
+  function transformLetters(text, fn) {
+    return [...text].map(ch => {
+      const up = ch.toUpperCase();
+      if (!ALPHABET.includes(up)) return ch;
+      return preserveCase(ch, fn(up));
+    }).join("");
+  }
+
+  function caesar(text, shift) {
+    const s = ((shift % 26) + 26) % 26;
+    return transformLetters(text, ch => ALPHABET[(ALPHABET.indexOf(ch)+s)%26]);
+  }
+
+  function atbash(text) {
+    return transformLetters(text, ch => ALPHABET[25 - ALPHABET.indexOf(ch)]);
+  }
+
+  function fonic(text) {
+    return [...text].map(ch => {
+      const up = ch.toUpperCase();
+      if (!FONIC_MAP[up]) return ch;
+      return preserveCase(ch, FONIC_MAP[up]);
+    }).join("");
+  }
+
+  function renderHome() {
+    state.currentModule = null;
+    document.body.classList.remove("module-open");
+    main.innerHTML = `
+      <section class="hero">
+        <div class="eyebrow">Laboratorio interattivo</div>
+        <h2>Decifra. Codifica.<br>Capisci il meccanismo.</h2>
+        <p>CODEX! raccoglie cifrari segreti e sistemi di codifica. Questa prima versione mette alla prova l’architettura modulare con quattro strumenti diversi.</p>
+      </section>
+
+      <div class="section-title">
+        <h3>🔐 Codici segreti</h3><span>cifrari e sostituzioni</span>
+      </div>
+      <section class="cards">
+        ${moduleCard(MODULES.caesar)}
+        ${moduleCard(MODULES.atbash)}
+        ${moduleCard(MODULES.fonic)}
+      </section>
+
+      <div class="section-title">
+        <h3>🔤 Codici e rappresentazioni</h3><span>informazione, numeri e simboli</span>
+      </div>
+      <section class="cards">
+        ${moduleCard(MODULES.ascii)}
+      </section>
+    `;
+    $$(".card[data-module]").forEach(btn => btn.addEventListener("click", () => openModule(btn.dataset.module)));
+  }
+
+  function moduleCard(m) {
+    return `
+      <button class="card" data-module="${m.id}">
+        <div class="card-icon">${m.icon}</div>
+        <h4>${m.short}</h4>
+        <p>${m.description}</p>
+        <span class="badge ${m.category}">${m.category === "secret" ? "CODICE SEGRETO" : "CODICE"}</span>
+      </button>
+    `;
+  }
+
+  function openModule(id) {
+    const m = MODULES[id];
+    if (!m) return;
+    state.currentModule = id;
+    document.body.classList.add("module-open");
+    m.render();
+    window.scrollTo({top:0, behavior:"smooth"});
+    beep(720);
+  }
+
+  function moduleHeader(m) {
+    return `
+      <div class="module-head">
+        <div>
+          <div class="eyebrow">${m.category === "secret" ? "Codice segreto" : "Codice e rappresentazione"}</div>
+          <h2>${m.title}</h2>
+          <p>${m.description}</p>
+        </div>
+        <button class="help-btn" id="moduleHelp">? COME FUNZIONA</button>
+      </div>
+    `;
+  }
+
+  function wireHelp(m) {
+    $("#moduleHelp").addEventListener("click", () => {
+      $("#helpContent").innerHTML = m.help;
+      $("#helpDialog").showModal();
+      beep(610);
+    });
+  }
+
+  function renderCaesar() {
+    const m = MODULES.caesar;
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace">
+        <section class="panel">
+          <h3>Messaggio</h3>
+          <label class="field">Testo
+            <textarea id="inputText" placeholder="Scrivi qui il messaggio…">ATTACCO ALL'ALBA</textarea>
+          </label>
+          <label class="field">Chiave di spostamento
+            <div class="range-row">
+              <input type="range" id="shift" min="1" max="25" value="3">
+              <div class="range-value" id="shiftValue">3</div>
+            </div>
+          </label>
+          <div class="action-row">
+            <button class="primary" id="encodeBtn">CODIFICA →</button>
+            <button class="secondary" id="decodeBtn">← DECODIFICA</button>
+            <button class="ghost" id="swapBtn">⇄ SCAMBIA</button>
+          </div>
+          <div class="alpha-rows">
+            <div class="alpha-row" id="alphaTop"></div>
+            <div class="alpha-row" id="alphaBottom"></div>
+          </div>
+        </section>
+        <section class="panel">
+          <h3>Risultato</h3>
+          <div class="result-box" id="result"></div>
+          <div class="action-row">
+            <button class="ghost" id="copyBtn">COPIA</button>
+            <button class="ghost" id="clearBtn">PULISCI</button>
+          </div>
+          <div class="note">Con chiave 3, A diventa D. Per decodificare, CODEX! compie lo spostamento opposto.</div>
+        </section>
+      </div>
+    `;
+    wireHelp(m);
+    const input = $("#inputText"), shift = $("#shift"), result = $("#result");
+    let lastMode = "encode";
+
+    const drawAlphabet = () => {
+      const s = +shift.value;
+      $("#alphaTop").innerHTML = [...ALPHABET].map(c => `<div class="alpha-cell">${c}</div>`).join("");
+      $("#alphaBottom").innerHTML = [...ALPHABET].map((_,i) => `<div class="alpha-cell">${ALPHABET[(i+s)%26]}</div>`).join("");
+    };
+    const update = () => {
+      $("#shiftValue").textContent = shift.value;
+      result.textContent = lastMode === "encode" ? caesar(input.value,+shift.value) : caesar(input.value,-shift.value);
+      drawAlphabet();
+    };
+    $("#encodeBtn").onclick = () => {lastMode="encode";update();beep()};
+    $("#decodeBtn").onclick = () => {lastMode="decode";update();beep(560)};
+    $("#swapBtn").onclick = () => {input.value=result.textContent; lastMode = lastMode === "encode" ? "decode" : "encode"; update(); beep(820)};
+    $("#copyBtn").onclick = () => copyText(result.textContent);
+    $("#clearBtn").onclick = () => {input.value="";result.textContent="";beep(430)};
+    shift.oninput = update;
+    input.oninput = update;
+    update();
+  }
+
+  function renderAtbash() {
+    const m = MODULES.atbash;
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace">
+        <section class="panel">
+          <h3>Messaggio</h3>
+          <label class="field">Testo
+            <textarea id="inputText" placeholder="Scrivi qui il messaggio…">CODICE SEGRETO</textarea>
+          </label>
+          <div class="action-row">
+            <button class="primary" id="transformBtn">TRASFORMA ⇄</button>
+            <button class="ghost" id="swapBtn">USA IL RISULTATO</button>
+          </div>
+          <div class="alpha-rows">
+            <div class="alpha-row">${[...ALPHABET].map(c=>`<div class="alpha-cell">${c}</div>`).join("")}</div>
+            <div class="alpha-row">${[...ALPHABET].reverse().map(c=>`<div class="alpha-cell">${c}</div>`).join("")}</div>
+          </div>
+          <div class="note">Atbash è simmetrico: la stessa trasformazione serve sia per codificare sia per decodificare.</div>
+        </section>
+        <section class="panel">
+          <h3>Risultato</h3>
+          <div class="result-box" id="result"></div>
+          <div class="action-row">
+            <button class="ghost" id="copyBtn">COPIA</button>
+            <button class="ghost" id="clearBtn">PULISCI</button>
+          </div>
+        </section>
+      </div>
+    `;
+    wireHelp(m);
+    const input=$("#inputText"), result=$("#result");
+    const update=()=>result.textContent=atbash(input.value);
+    $("#transformBtn").onclick=()=>{update();beep()};
+    $("#swapBtn").onclick=()=>{input.value=result.textContent;update();beep(820)};
+    $("#copyBtn").onclick=()=>copyText(result.textContent);
+    $("#clearBtn").onclick=()=>{input.value="";result.textContent="";beep(430)};
+    input.oninput=update;
+    update();
+  }
+
+  function renderFonic() {
+    const m = MODULES.fonic;
+    const pairs = [["A","O"],["E","I"],["B","P"],["C","G"],["D","T"],["F","V"],["L","R"],["M","N"],["S","Z"]];
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace">
+        <section class="panel">
+          <h3>Messaggio</h3>
+          <label class="field">Testo
+            <textarea id="inputText" placeholder="Scrivi qui il messaggio…">Flavio Naretti</textarea>
+          </label>
+          <div class="action-row">
+            <button class="primary" id="transformBtn">CODIFICA / DECODIFICA ⇄</button>
+            <button class="ghost" id="swapBtn">USA IL RISULTATO</button>
+          </div>
+          <div class="mapping-grid">
+            ${pairs.map(([a,b])=>`<div class="map-pair">${a} ↔ ${b}</div>`).join("")}
+            <div class="map-pair fixed">Q → Q</div>
+            <div class="map-pair fixed">U → U</div>
+            <div class="map-pair fixed">H → H</div>
+          </div>
+          <div class="note">Anche questo codice è simmetrico: applicalo due volte e tornerai al messaggio originale.</div>
+        </section>
+        <section class="panel">
+          <h3>Risultato</h3>
+          <div class="result-box" id="result"></div>
+          <div class="action-row">
+            <button class="ghost" id="copyBtn">COPIA</button>
+            <button class="ghost" id="clearBtn">PULISCI</button>
+          </div>
+        </section>
+      </div>
+    `;
+    wireHelp(m);
+    const input=$("#inputText"), result=$("#result");
+    const update=()=>result.textContent=fonic(input.value);
+    $("#transformBtn").onclick=()=>{update();beep()};
+    $("#swapBtn").onclick=()=>{input.value=result.textContent;update();beep(820)};
+    $("#copyBtn").onclick=()=>copyText(result.textContent);
+    $("#clearBtn").onclick=()=>{input.value="";result.textContent="";beep(430)};
+    input.oninput=update;
+    update();
+  }
+
+  function renderAscii() {
+    const m = MODULES.ascii;
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace">
+        <section class="panel">
+          <h3>Testo → ASCII</h3>
+          <label class="field">Testo
+            <textarea id="asciiText" placeholder="Scrivi testo ASCII…">CODEX!</textarea>
+          </label>
+          <div class="segmented" id="viewMode">
+            <button data-view="all" class="active">TUTTI</button>
+            <button data-view="dec">DEC</button>
+            <button data-view="bin">BIN</button>
+            <button data-view="hex">HEX</button>
+          </div>
+          <div class="table-wrap" id="asciiTable"></div>
+        </section>
+
+        <section class="panel">
+          <h3>ASCII → Testo</h3>
+          <label class="field">Formato in ingresso
+            <select id="asciiInputMode">
+              <option value="dec">Decimale</option>
+              <option value="bin">Binario</option>
+              <option value="hex">Esadecimale</option>
+            </select>
+          </label>
+          <label class="field">Valori separati da spazi
+            <textarea id="asciiCodes" placeholder="67 79 68 69 88 33">67 79 68 69 88 33</textarea>
+          </label>
+          <button class="secondary" id="decodeAscii">DECODIFICA</button>
+          <h3 style="margin-top:18px">Risultato</h3>
+          <div class="result-box" id="asciiDecoded"></div>
+          <div class="action-row">
+            <button class="ghost" id="copyAscii">COPIA</button>
+          </div>
+          <div class="note">Questa versione lavora con ASCII standard (0–127). I caratteri fuori da questo intervallo vengono segnalati.</div>
+        </section>
+      </div>
+    `;
+    wireHelp(m);
+
+    let view = "all";
+    const text=$("#asciiText"), table=$("#asciiTable"), codes=$("#asciiCodes"), decoded=$("#asciiDecoded");
+
+    const renderTable = () => {
+      const chars = [...text.value];
+      if (!chars.length) { table.innerHTML=`<div class="empty">Scrivi qualcosa per vedere i codici.</div>`; return; }
+      const rows = chars.map(ch => {
+        const code = ch.charCodeAt(0);
+        const valid = code <= 127;
+        const disp = ch === " " ? "␠" : ch === "\n" ? "↵" : escapeHtml(ch);
+        const dec = valid ? code : "—";
+        const bin = valid ? code.toString(2).padStart(8,"0") : "fuori ASCII";
+        const hex = valid ? code.toString(16).toUpperCase().padStart(2,"0") : "—";
+        return {disp,dec,bin,hex};
+      });
+      const cols = view === "all" ? ["char","dec","bin","hex"] : ["char",view];
+      const heads = {char:"Carattere",dec:"Decimale",bin:"Binario",hex:"Hex"};
+      table.innerHTML = `<table><thead><tr>${cols.map(c=>`<th>${heads[c]}</th>`).join("")}</tr></thead><tbody>${
+        rows.map(r=>`<tr>${cols.map(c=>`<td class="mono">${c==="char"?r.disp:r[c]}</td>`).join("")}</tr>`).join("")
+      }</tbody></table>`;
+    };
+
+    const decode = () => {
+      const mode=$("#asciiInputMode").value;
+      const tokens = codes.value.trim().split(/[\s,;]+/).filter(Boolean);
+      const radix = mode==="dec"?10:mode==="bin"?2:16;
+      const out=[];
+      let bad=false;
+      for (const tok of tokens) {
+        const n = parseInt(tok,radix);
+        const canonical = mode==="bin" ? /^[01]+$/ : mode==="hex" ? /^[0-9a-f]+$/i : /^\d+$/;
+        if (!canonical.test(tok) || Number.isNaN(n) || n<0 || n>127) { out.push("�"); bad=true; }
+        else out.push(String.fromCharCode(n));
+      }
+      decoded.textContent = out.join("");
+      if (bad) toast("Alcuni valori non sono ASCII validi");
+    };
+
+    $$("#viewMode button").forEach(btn => btn.onclick = () => {
+      view=btn.dataset.view;
+      $$("#viewMode button").forEach(b=>b.classList.toggle("active",b===btn));
+      renderTable();beep(680);
+    });
+    text.oninput=renderTable;
+    $("#decodeAscii").onclick=()=>{decode();beep(560)};
+    codes.oninput=decode;
+    $("#asciiInputMode").onchange=decode;
+    $("#copyAscii").onclick=()=>copyText(decoded.textContent);
+
+    renderTable(); decode();
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast("Copiato");
+      beep(900);
+    } catch {
+      toast("Copia non disponibile");
+    }
+  }
+
+  $("#homeBtn").addEventListener("click", () => {renderHome();beep(520)});
+  $("#brandBtn").addEventListener("click", () => {renderHome();beep(520)});
+  $("#brandBtn").addEventListener("keydown", e => {if(e.key==="Enter"||e.key===" "){renderHome();beep(520)}});
+  $("#themeBtn").addEventListener("click", () => {state.dark=!state.dark;applyTheme();beep(520)});
+  $("#soundBtn").addEventListener("click", () => {state.sound=!state.sound;syncSoundIcon();if(state.sound)beep(760);});
+  $("#fullscreenBtn").addEventListener("click", async () => {
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      else await document.exitFullscreen();
+      beep(650);
+    } catch { toast("Schermo intero non disponibile"); }
+  });
+  $("#infoBtn").addEventListener("click", () => {$("#infoDialog").showModal();beep(610)});
+  $$("[data-close]").forEach(btn => btn.addEventListener("click", () => $("#"+btn.dataset.close).close()));
+  ["infoDialog","helpDialog"].forEach(id => {
+    $("#"+id).addEventListener("click", e => {
+      const dialog = e.currentTarget;
+      const rect = dialog.getBoundingClientRect();
+      if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) dialog.close();
+    });
+  });
+
+  applyTheme();
+  syncSoundIcon();
+  renderHome();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js").catch(()=>{}));
+  }
+})();
