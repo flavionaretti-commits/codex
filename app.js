@@ -63,6 +63,21 @@
       `,
       render: renderFonic
     },
+    pigpen: {
+      id:"pigpen",
+      title:"Cifrario Pigpen",
+      short:"PIGPEN",
+      category:"secret",
+      icon:"⌗",
+      description:"Sostituisce le lettere con simboli ricavati da griglie e croci.",
+      help:`
+        <h2>Cifrario Pigpen</h2>
+        <p>Pigpen è un cifrario a sostituzione: ogni lettera dell’alfabeto viene rappresentata da una parte di una griglia o di una croce.</p>
+        <p>A–I usano la prima griglia; J–R ripetono le stesse forme con un <strong>punto</strong>. S–V usano quattro forme a croce; W–Z le stesse forme con un punto.</p>
+        <p>Non esiste una sola convenzione storica universale per l’ordine dei simboli. CODEX! usa una disposizione coerente e molto diffusa e mostra sempre il proprio alfabeto di riferimento.</p>
+      `,
+      render: renderPigpen
+    },
     ascii: {
       id:"ascii",
       title:"Codice ASCII",
@@ -160,6 +175,7 @@
         ${moduleCard(MODULES.caesar)}
         ${moduleCard(MODULES.atbash)}
         ${moduleCard(MODULES.fonic)}
+        ${moduleCard(MODULES.pigpen)}
       </section>
 
       <div class="section-title">
@@ -355,6 +371,136 @@
     $("#clearBtn").onclick=()=>{input.value="";result.textContent="";beep(430)};
     input.oninput=update;
     update();
+  }
+
+  function pigpenMeta(letter) {
+    const up = letter.toUpperCase();
+    const idx = ALPHABET.indexOf(up);
+    if (idx < 0) return null;
+    if (idx < 18) {
+      const base = idx % 9;
+      return {kind:"grid", pos:base, dotted:idx >= 9};
+    }
+    return {kind:"x", pos:(idx - 18) % 4, dotted:idx >= 22};
+  }
+
+  function pigpenSvg(letter, cls="pig-glyph") {
+    const meta = pigpenMeta(letter);
+    if (!meta) return escapeHtml(letter);
+    const stroke = "currentColor";
+    let lines = "";
+    if (meta.kind === "grid") {
+      const row = Math.floor(meta.pos / 3);
+      const col = meta.pos % 3;
+      if (row > 0) lines += '<path d="M5 6 H31"/>';
+      if (row < 2) lines += '<path d="M5 30 H31"/>';
+      if (col > 0) lines += '<path d="M6 5 V31"/>';
+      if (col < 2) lines += '<path d="M30 5 V31"/>';
+    } else {
+      const shapes = [
+        '<path d="M5 6 L18 20 L31 6"/>',
+        '<path d="M30 5 L16 18 L30 31"/>',
+        '<path d="M5 30 L18 16 L31 30"/>',
+        '<path d="M6 5 L20 18 L6 31"/>'
+      ];
+      lines = shapes[meta.pos];
+    }
+    const dot = meta.dotted ? '<circle cx="18" cy="18" r="2.7" fill="currentColor" stroke="none"/>' : "";
+    return `<svg class="${cls}" viewBox="0 0 36 36" aria-hidden="true"><g fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${lines}</g>${dot}</svg>`;
+  }
+
+  function renderPigpen() {
+    const m = MODULES.pigpen;
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace pigpen-workspace">
+        <section class="panel">
+          <h3>Testo → Pigpen</h3>
+          <label class="field">Messaggio
+            <textarea id="pigInput" placeholder="Scrivi qui il messaggio…">MESSAGGIO SEGRETO</textarea>
+          </label>
+          <div class="pig-result" id="pigEncoded"></div>
+          <div class="action-row">
+            <button class="ghost" id="pigClearEncode">PULISCI</button>
+            <button class="ghost" id="pigAlphabetBtn">MOSTRA ALFABETO</button>
+          </div>
+          <div class="note">Spazi e punteggiatura restano visibili. Le lettere vengono sostituite dai simboli Pigpen.</div>
+        </section>
+
+        <section class="panel">
+          <h3>Pigpen → Testo</h3>
+          <p class="pig-instruction">Riproduci il messaggio cifrato toccando i simboli corrispondenti. I tasti non mostrano le lettere, così puoi davvero decifrare.</p>
+          <div class="pig-keyboard" id="pigKeyboard"></div>
+          <div class="action-row">
+            <button class="ghost" id="pigSpace">SPAZIO</button>
+            <button class="ghost" id="pigBack">⌫</button>
+            <button class="ghost" id="pigClearDecode">PULISCI</button>
+          </div>
+          <h3 style="margin-top:18px">Testo decifrato</h3>
+          <div class="result-box" id="pigDecoded"></div>
+          <div class="action-row">
+            <button class="ghost" id="pigCopy">COPIA</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel pig-alphabet-panel" id="pigAlphabetPanel" hidden>
+        <h3>Alfabeto Pigpen usato da CODEX!</h3>
+        <div class="pig-alphabet">
+          ${[...ALPHABET].map(ch => `<div class="pig-alpha-item"><span>${ch}</span>${pigpenSvg(ch,"pig-glyph large")}</div>`).join("")}
+        </div>
+      </section>
+    `;
+    wireHelp(m);
+
+    const input = $("#pigInput");
+    const encoded = $("#pigEncoded");
+    const decoded = $("#pigDecoded");
+    let decodedText = "";
+
+    const updateEncoded = () => {
+      const html = [...input.value].map(ch => {
+        if (ALPHABET.includes(ch.toUpperCase())) {
+          return `<span class="pig-token" title="${escapeHtml(ch.toUpperCase())}">${pigpenSvg(ch)}</span>`;
+        }
+        if (ch === " ") return '<span class="pig-space" aria-label="spazio"></span>';
+        if (ch === "\n") return '<span class="pig-break"></span>';
+        return `<span class="pig-punct">${escapeHtml(ch)}</span>`;
+      }).join("");
+      encoded.innerHTML = html || '<span class="result-placeholder">Scrivi qualcosa per vedere il messaggio cifrato.</span>';
+    };
+
+    const updateDecoded = () => {
+      decoded.textContent = decodedText;
+    };
+
+    $("#pigKeyboard").innerHTML = [...ALPHABET].map(ch =>
+      `<button class="pig-key" data-letter="${ch}" aria-label="Simbolo Pigpen">${pigpenSvg(ch,"pig-glyph key")}</button>`
+    ).join("");
+
+    $(".pig-key", $("#pigKeyboard")).forEach(btn => {
+      btn.onclick = () => {
+        decodedText += btn.dataset.letter;
+        updateDecoded();
+        beep(690);
+      };
+    });
+
+    input.oninput = updateEncoded;
+    $("#pigClearEncode").onclick = () => {input.value="";updateEncoded();beep(430)};
+    $("#pigAlphabetBtn").onclick = () => {
+      const panel = $("#pigAlphabetPanel");
+      panel.hidden = !panel.hidden;
+      $("#pigAlphabetBtn").textContent = panel.hidden ? "MOSTRA ALFABETO" : "NASCONDI ALFABETO";
+      if (!panel.hidden) panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+      beep(620);
+    };
+    $("#pigSpace").onclick = () => {decodedText += " ";updateDecoded();beep(560)};
+    $("#pigBack").onclick = () => {decodedText = decodedText.slice(0,-1);updateDecoded();beep(480)};
+    $("#pigClearDecode").onclick = () => {decodedText="";updateDecoded();beep(430)};
+    $("#pigCopy").onclick = () => copyText(decodedText);
+
+    updateEncoded();
+    updateDecoded();
   }
 
   function renderAscii() {
