@@ -1,17 +1,17 @@
-const CACHE = "codex-v0.5.3-braille-decode";
-const ASSETS = [
+const CACHE = "codex-v0.5.6-runtime-fix";
+const CORE = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./braille-fix.js",
+  "./styles.css?v=056-pigpen",
+  "./runtime-fix.js?v=056-pigpen",
+  "./app.js?v=056-pigpen",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
 });
 
@@ -24,11 +24,33 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+
+  const req = event.request;
+  const url = new URL(req.url);
+  const isCode =
+    req.mode === "navigate" ||
+    url.pathname.endsWith("/index.html") ||
+    url.pathname.endsWith("/app.js") ||
+    url.pathname.endsWith("/runtime-fix.js") ||
+    url.pathname.endsWith("/styles.css");
+
+  if (isCode) {
+    // Network first: CODEX! updates must not remain stuck on an old cached app.js.
+    event.respondWith(
+      fetch(req).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => cache.put(req, copy));
+        return response;
+      }).catch(() => caches.match(req).then(r => r || caches.match("./index.html")))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    caches.match(req).then(cached => cached || fetch(req).then(response => {
       const copy = response.clone();
-      caches.open(CACHE).then(cache => cache.put(event.request, copy));
+      caches.open(CACHE).then(cache => cache.put(req, copy));
       return response;
-    }).catch(() => caches.match("./index.html")))
+    }))
   );
 });
