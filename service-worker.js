@@ -1,10 +1,10 @@
-const CACHE = "codex-v0.5.8-pigpen";
+const CACHE = "codex-v0.5.9-pigpen-standalone";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css?v=058-pigpen",
   "./runtime-fix.js?v=058-pigpen",
-  "./app.js?v=058-pigpen",
+  "./app.js?v=058-pigpen",\n  "./pigpen-fix.js?v=059",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
