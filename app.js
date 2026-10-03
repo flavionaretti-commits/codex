@@ -93,6 +93,21 @@
       `,
       render: renderPigpen
     },
+    morse: {
+      id:"morse",
+      title:"Codice Morse",
+      short:"MORSE",
+      category:"code",
+      icon:"·–",
+      description:"Rappresenta lettere e numeri con sequenze di punti e linee.",
+      help:`
+        <h2>Codice Morse</h2>
+        <p>Il Morse rappresenta caratteri mediante segnali brevi (<strong>punti</strong>) e lunghi (<strong>linee</strong>). Non è un cifrario segreto: è un sistema di codifica pensato per trasmettere informazioni.</p>
+        <p>Nella temporizzazione standard un punto dura 1 unità, una linea 3; la pausa tra i segni della stessa lettera dura 1 unità, tra lettere 3 e tra parole 7.</p>
+        <p>CODEX! usa il Morse internazionale per A–Z, cifre 0–9 e alcuni segni di punteggiatura comuni. Nella scrittura usa <strong>/</strong> come separatore tra parole.</p>
+      `,
+      render: renderMorse
+    },
     ascii: {
       id:"ascii",
       title:"Codice ASCII",
@@ -198,6 +213,7 @@
         <h3>🔤 Codici e rappresentazioni</h3><span>informazione, numeri e simboli</span>
       </div>
       <section class="cards">
+        ${moduleCard(MODULES.morse)}
         ${moduleCard(MODULES.ascii)}
       </section>
     `;
@@ -632,6 +648,253 @@
 
     updateEncoded();
     updateDecoded();
+  }
+
+  const MORSE_MAP = {
+    A:".-", B:"-...", C:"-.-.", D:"-..", E:".", F:"..-.", G:"--.", H:"....",
+    I:"..", J:".---", K:"-.-", L:".-..", M:"--", N:"-.", O:"---", P:".--.",
+    Q:"--.-", R:".-.", S:"...", T:"-", U:"..-", V:"...-", W:".--", X:"-..-",
+    Y:"-.--", Z:"--..",
+    "0":"-----", "1":".----", "2":"..---", "3":"...--", "4":"....-", "5":".....",
+    "6":"-....", "7":"--...", "8":"---..", "9":"----.",
+    ".":".-.-.-", ",":"--..--", "?":"..--..", "'":".----.", "!":"-.-.--",
+    "/":"-..-.", "(":"-.--.", ")":"-.--.-", "&":".-...", ":":"---...",
+    ";":"-.-.-.", "=":"-...-", "+":".-.-.", "-":"-....-", "_":"..--.-",
+    '"':".-..-.", "$":"...-..-", "@":".--.-."
+  };
+  const MORSE_REVERSE = Object.fromEntries(Object.entries(MORSE_MAP).map(([k,v]) => [v,k]));
+  let morseAudioSequence = 0;
+
+  function normalizeMorseText(text) {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+  }
+
+  function encodeMorse(text) {
+    const normalized = normalizeMorseText(text);
+    return normalized.trim().split(/\s+/).filter(Boolean).map(word =>
+      [...word].map(ch => MORSE_MAP[ch] || "�").join(" ")
+    ).join(" / ");
+  }
+
+  function decodeMorse(code) {
+    const trimmed = code.trim();
+    if (!trimmed) return "";
+    return trimmed.split(/\s+\/\s+/).map(word =>
+      word.trim().split(/\s+/).filter(Boolean).map(token => MORSE_REVERSE[token] || "�").join("")
+    ).join(" ");
+  }
+
+  async function playMorseSequence(code, indicator, button) {
+    const myId = ++morseAudioSequence;
+    const unit = 115;
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const words = code.trim().split(/\s+\/\s+/).filter(Boolean);
+    if (!words.length) return;
+
+    button.disabled = true;
+    button.textContent = "■ FERMA";
+    button.onclick = () => {
+      morseAudioSequence++;
+      button.disabled = false;
+      button.textContent = "▶ ASCOLTA";
+      if (indicator) indicator.classList.remove("on","dash");
+    };
+
+    try {
+      for (let wi=0; wi<words.length; wi++) {
+        const letters = words[wi].trim().split(/\s+/).filter(Boolean);
+        for (let li=0; li<letters.length; li++) {
+          const token = letters[li];
+          if (!/^[.-]+$/.test(token)) continue;
+          for (let si=0; si<token.length; si++) {
+            if (myId !== morseAudioSequence) return;
+            const symbol = token[si];
+            const dur = symbol === "." ? unit : unit*3;
+            if (indicator) {
+              indicator.textContent = symbol;
+              indicator.classList.add("on");
+              indicator.classList.toggle("dash", symbol === "-");
+            }
+            beep(690, dur/1000, .24);
+            await sleep(dur);
+            if (indicator) indicator.classList.remove("on","dash");
+            if (si < token.length-1) await sleep(unit);
+          }
+          if (li < letters.length-1) await sleep(unit*3);
+        }
+        if (wi < words.length-1) await sleep(unit*7);
+      }
+    } finally {
+      if (myId === morseAudioSequence) {
+        button.disabled = false;
+        button.textContent = "▶ ASCOLTA";
+        button.onclick = () => startPlayback();
+        if (indicator) {
+          indicator.textContent = "·–";
+          indicator.classList.remove("on","dash");
+        }
+      }
+    }
+
+    function startPlayback() {
+      playMorseSequence(code, indicator, button);
+    }
+  }
+
+  function renderMorse() {
+    const m = MODULES.morse;
+    morseAudioSequence++;
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace">
+        <section class="panel">
+          <h3>Testo → Morse</h3>
+          <label class="field">Messaggio
+            <textarea id="morseText" placeholder="Scrivi qui il messaggio…">SOS CODEX</textarea>
+          </label>
+          <h3>Codice</h3>
+          <div class="result-box morse-output" id="morseEncoded"></div>
+          <div class="morse-audio-row">
+            <div class="morse-lamp" id="morseLamp" aria-hidden="true">·–</div>
+            <button class="primary" id="morsePlay">▶ ASCOLTA</button>
+            <label class="morse-speed">Velocità
+              <select id="morseSpeed">
+                <option value="160">Lenta</option>
+                <option value="115" selected>Normale</option>
+                <option value="80">Veloce</option>
+              </select>
+            </label>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="morseCopy">COPIA</button>
+            <button class="ghost" id="morseClearText">PULISCI</button>
+          </div>
+          <div class="note">Le parole sono separate da <strong>/</strong>. Le lettere accentate vengono ricondotte alla lettera base: È → E, à → A.</div>
+        </section>
+
+        <section class="panel">
+          <h3>Morse → Testo</h3>
+          <label class="field">Codice Morse
+            <textarea id="morseCode" class="morse-entry" spellcheck="false" placeholder="... --- ... / -.-. --- -.. . -..-">... --- ... / -.-. --- -.. . -..-</textarea>
+          </label>
+          <div class="morse-entry-buttons">
+            <button class="ghost morse-symbol-btn" data-symbol=".">· PUNTO</button>
+            <button class="ghost morse-symbol-btn" data-symbol="-">– LINEA</button>
+            <button class="ghost morse-symbol-btn" data-symbol=" ">PAUSA LETTERA</button>
+            <button class="ghost morse-symbol-btn" data-symbol=" / ">PAUSA PAROLA</button>
+            <button class="ghost" id="morseBack">⌫</button>
+          </div>
+          <h3 style="margin-top:18px">Testo decodificato</h3>
+          <div class="result-box" id="morseDecoded"></div>
+          <div class="action-row">
+            <button class="ghost" id="morseCopyDecoded">COPIA</button>
+            <button class="ghost" id="morseClearCode">PULISCI</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel morse-reference">
+        <div class="vig-explain-head">
+          <div>
+            <h3>Alfabeto Morse internazionale</h3>
+            <p class="pig-instruction">Tocca una tessera per inserirne il codice nel campo di decodifica.</p>
+          </div>
+          <button class="ghost" id="morseToggleRef">NASCONDI TABELLA</button>
+        </div>
+        <div class="morse-grid" id="morseGrid">
+          ${Object.entries(MORSE_MAP).filter(([ch]) => /^[A-Z0-9]$/.test(ch)).map(([ch,code]) =>
+            `<button class="morse-ref-item" data-code="${code}"><strong>${ch}</strong><span>${code}</span></button>`
+          ).join("")}
+        </div>
+      </section>
+    `;
+    wireHelp(m);
+
+    const text=$("#morseText"), code=$("#morseCode");
+    const encoded=$("#morseEncoded"), decoded=$("#morseDecoded");
+    const playBtn=$("#morsePlay"), lamp=$("#morseLamp");
+
+    const updateEncode=()=>{
+      const out=encodeMorse(text.value);
+      encoded.textContent=out;
+      if (!out) encoded.innerHTML='<span class="result-placeholder">Scrivi un messaggio per convertirlo in Morse.</span>';
+    };
+    const updateDecode=()=>{
+      const out=decodeMorse(code.value);
+      decoded.textContent=out;
+    };
+
+    const startPlay=async()=>{
+      const current=encodeMorse(text.value);
+      if (!current) return;
+      const unit=+$("#morseSpeed").value;
+      const myId=++morseAudioSequence;
+      const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+      const words=current.split(/\s+\/\s+/).filter(Boolean);
+      playBtn.textContent="■ FERMA";
+      playBtn.classList.add("playing");
+      const oldClick=playBtn.onclick;
+      playBtn.onclick=()=>{
+        morseAudioSequence++;
+        lamp.textContent="·–";
+        lamp.classList.remove("on","dash");
+        playBtn.textContent="▶ ASCOLTA";
+        playBtn.classList.remove("playing");
+        playBtn.onclick=oldClick;
+      };
+      for(let wi=0;wi<words.length;wi++){
+        const letters=words[wi].trim().split(/\s+/).filter(Boolean);
+        for(let li=0;li<letters.length;li++){
+          const token=letters[li];
+          if(!/^[.-]+$/.test(token)) continue;
+          for(let si=0;si<token.length;si++){
+            if(myId!==morseAudioSequence) return;
+            const sym=token[si], dur=sym==="."?unit:unit*3;
+            lamp.textContent=sym==="."?"·":"–";
+            lamp.classList.add("on");
+            lamp.classList.toggle("dash",sym==="-");
+            beep(690,dur/1000,.24);
+            await sleep(dur);
+            lamp.classList.remove("on","dash");
+            if(si<token.length-1) await sleep(unit);
+          }
+          if(li<letters.length-1) await sleep(unit*3);
+        }
+        if(wi<words.length-1) await sleep(unit*7);
+      }
+      if(myId===morseAudioSequence){
+        lamp.textContent="·–";
+        playBtn.textContent="▶ ASCOLTA";
+        playBtn.classList.remove("playing");
+        playBtn.onclick=oldClick;
+      }
+    };
+
+    playBtn.onclick=startPlay;
+    text.oninput=updateEncode;
+    code.oninput=updateDecode;
+    $("#morseCopy").onclick=()=>copyText(encodeMorse(text.value));
+    $("#morseCopyDecoded").onclick=()=>copyText(decoded.textContent);
+    $("#morseClearText").onclick=()=>{text.value="";updateEncode();morseAudioSequence++;beep(430)};
+    $("#morseClearCode").onclick=()=>{code.value="";updateDecode();beep(430)};
+    $("#morseBack").onclick=()=>{code.value=code.value.slice(0,-1);updateDecode();code.focus();beep(470)};
+    $(".morse-symbol-btn").forEach(btn=>btn.onclick=()=>{
+      code.value+=btn.dataset.symbol;
+      updateDecode();code.focus();beep(btn.dataset.symbol==="-"?570:720);
+    });
+    $(".morse-ref-item").forEach(btn=>btn.onclick=()=>{
+      const sep=code.value && !/\s$/.test(code.value)?" ":"";
+      code.value+=sep+btn.dataset.code+" ";
+      updateDecode();code.focus();beep(660);
+    });
+    $("#morseToggleRef").onclick=()=>{
+      const grid=$("#morseGrid");
+      grid.hidden=!grid.hidden;
+      $("#morseToggleRef").textContent=grid.hidden?"MOSTRA TABELLA":"NASCONDI TABELLA";
+      beep(620);
+    };
+
+    updateEncode();
+    updateDecode();
   }
 
   function renderAscii() {
