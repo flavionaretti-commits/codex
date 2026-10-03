@@ -1,4 +1,4 @@
-const CACHE = "codex-v0.5-braille";
+const CACHE = "codex-v0.5.1-pigpen-fix";
 const ASSETS = [
   "./",
   "./index.html",
