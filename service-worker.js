@@ -1,10 +1,10 @@
-const CACHE = "codex-v0.5.6-runtime-fix";
+const CACHE = "codex-v0.5.7-direct-fix";
 const CORE = [
   "./",
   "./index.html",
-  "./styles.css?v=056-pigpen",
-  "./runtime-fix.js?v=056-pigpen",
-  "./app.js?v=056-pigpen",
+  "./styles.css?v=057-fix",
+  "./runtime-fix.js?v=057-fix",
+  "./app.js?v=057-fix",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
