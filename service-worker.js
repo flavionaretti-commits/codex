@@ -1,9 +1,10 @@
-const CACHE = "codex-v0.5.1-pigpen-fix";
+const CACHE = "codex-v0.5.3-braille-decode";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./braille-fix.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
