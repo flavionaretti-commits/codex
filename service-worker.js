@@ -1,4 +1,4 @@
-const CACHE = "codex-v0.4-morse";
+const CACHE = "codex-v0.5-braille";
 const ASSETS = [
   "./",
   "./index.html",
