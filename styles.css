@@ -245,3 +245,42 @@ tr:last-child td{border-bottom:0}
   .vig-explain-head{display:block}
   .vig-explain-head .ghost{margin-top:8px}
 }
+
+/* MORSE */
+.morse-output{font-size:21px;letter-spacing:.08em;line-height:1.7}
+.morse-audio-row{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px
+}
+.morse-lamp{
+  width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
+  background:var(--panel-2);border:2px solid var(--line);font:900 24px/1 monospace;
+  transition:transform .08s ease,box-shadow .08s ease,background .08s ease
+}
+.morse-lamp.on{
+  background:var(--accent);color:white;transform:scale(1.08);
+  box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 20%,transparent),0 0 28px color-mix(in srgb,var(--accent) 55%,transparent)
+}
+.morse-lamp.on.dash{transform:scale(1.13)}
+#morsePlay.playing{background:var(--danger)}
+.morse-speed{font-size:12px;font-weight:900;color:var(--muted);margin-left:auto}
+.morse-speed select{width:auto;min-width:110px;margin:4px 0 0;padding:9px 11px}
+.morse-entry{font-family:"SFMono-Regular",Consolas,monospace;font-size:19px;letter-spacing:.05em}
+.morse-entry-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.morse-reference{margin-top:18px}
+.morse-grid{
+  display:grid;grid-template-columns:repeat(9,minmax(68px,1fr));gap:8px;margin-top:14px
+}
+.morse-ref-item{
+  min-height:66px;border:1px solid var(--line);border-radius:12px;background:var(--bg);
+  color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px
+}
+.morse-ref-item strong{font-size:18px;color:var(--accent)}
+.morse-ref-item span{font:800 15px/1 monospace;letter-spacing:.06em}
+.morse-ref-item:active{transform:scale(.96);background:var(--panel-2)}
+@media (max-width:900px){
+  .morse-grid{grid-template-columns:repeat(6,minmax(64px,1fr))}
+}
+@media (max-width:560px){
+  .morse-grid{grid-template-columns:repeat(4,minmax(60px,1fr))}
+  .morse-speed{margin-left:0}
+}
