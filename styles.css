@@ -217,3 +217,31 @@ tr:last-child td{border-bottom:0}
   .pig-token{width:34px;height:34px}
   .pig-glyph{width:31px;height:31px}
 }
+
+/* VIGENERE */
+.vig-explain{margin-top:18px}
+.vig-explain-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.vig-explain-head h3{margin-bottom:4px}
+.vig-detail{
+  margin-top:14px;overflow-x:auto;border:1px solid var(--line);border-radius:14px;
+  background:var(--bg);padding:10px
+}
+.vig-row{
+  display:grid;grid-template-columns:76px repeat(var(--vig-count,26),36px);
+  grid-auto-flow:column;grid-auto-columns:36px;gap:4px;width:max-content;min-width:100%;
+  align-items:center;margin:4px 0
+}
+.vig-row span{
+  position:sticky;left:0;z-index:2;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:8px;padding:8px 5px;font-size:11px;font-weight:900;text-align:center;color:var(--muted)
+}
+.vig-row b{
+  height:34px;min-width:34px;display:grid;place-items:center;border-radius:8px;
+  background:var(--panel);border:1px solid var(--line);font-family:monospace
+}
+.vig-shift b{color:var(--muted);font-size:12px}
+.vig-result-row b{background:color-mix(in srgb,var(--accent) 18%,var(--panel));color:var(--ink)}
+@media (max-width:620px){
+  .vig-explain-head{display:block}
+  .vig-explain-head .ghost{margin-top:8px}
+}
