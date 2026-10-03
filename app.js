@@ -63,6 +63,21 @@
       `,
       render: renderFonic
     },
+    vigenere: {
+      id:"vigenere",
+      title:"Cifrario di Vigenère",
+      short:"VIGENÈRE",
+      category:"secret",
+      icon:"🔑",
+      description:"Usa una parola chiave per cambiare lo spostamento lettera dopo lettera.",
+      help:`
+        <h2>Cifrario di Vigenère</h2>
+        <p>Vigenère può essere visto come una successione di cifrari di Cesare: ogni lettera della <strong>chiave</strong> indica uno spostamento diverso.</p>
+        <p>Con la convenzione A=0, B=1, C=2… la chiave viene ripetuta lungo il messaggio. Per codificare si sommano gli spostamenti; per decodificare si sottraggono.</p>
+        <p>CODEX! fa avanzare la chiave solo sulle lettere: spazi, numeri e punteggiatura restano invariati.</p>
+      `,
+      render: renderVigenere
+    },
     pigpen: {
       id:"pigpen",
       title:"Cifrario Pigpen",
@@ -175,6 +190,7 @@
         ${moduleCard(MODULES.caesar)}
         ${moduleCard(MODULES.atbash)}
         ${moduleCard(MODULES.fonic)}
+        ${moduleCard(MODULES.vigenere)}
         ${moduleCard(MODULES.pigpen)}
       </section>
 
@@ -370,6 +386,121 @@
     $("#copyBtn").onclick=()=>copyText(result.textContent);
     $("#clearBtn").onclick=()=>{input.value="";result.textContent="";beep(430)};
     input.oninput=update;
+    update();
+  }
+
+  function cleanVigenereKey(key) {
+    return [...key.toUpperCase()].filter(ch => ALPHABET.includes(ch)).join("");
+  }
+
+  function vigenereTransform(text, key, decode=false) {
+    const cleanKey = cleanVigenereKey(key);
+    if (!cleanKey) return {text:"", rows:[], key:""};
+    let ki = 0;
+    const rows = [];
+    const out = [...text].map(ch => {
+      const up = ch.toUpperCase();
+      if (!ALPHABET.includes(up)) return ch;
+      const kch = cleanKey[ki % cleanKey.length];
+      const shift = ALPHABET.indexOf(kch);
+      const src = ALPHABET.indexOf(up);
+      const dest = (src + (decode ? -shift : shift) + 26) % 26;
+      const res = preserveCase(ch, ALPHABET[dest]);
+      rows.push({
+        source: up,
+        key: kch,
+        shift,
+        result: ALPHABET[dest]
+      });
+      ki++;
+      return res;
+    }).join("");
+    return {text:out, rows, key:cleanKey};
+  }
+
+  function renderVigenere() {
+    const m = MODULES.vigenere;
+    main.innerHTML = moduleHeader(m) + `
+      <div class="workspace">
+        <section class="panel">
+          <h3>Messaggio e chiave</h3>
+          <label class="field">Testo
+            <textarea id="vigInput" placeholder="Scrivi qui il messaggio…">ATTACCO ALL'ALBA</textarea>
+          </label>
+          <label class="field">Parola chiave
+            <input id="vigKey" type="text" value="GALILEO" autocomplete="off" spellcheck="false" placeholder="Es. GALILEO">
+          </label>
+          <div class="action-row">
+            <button class="primary" id="vigEncode">CODIFICA →</button>
+            <button class="secondary" id="vigDecode">← DECODIFICA</button>
+            <button class="ghost" id="vigSwap">⇄ SCAMBIA</button>
+          </div>
+          <div class="note">La chiave viene ripetuta automaticamente. A=0, B=1, … Z=25.</div>
+        </section>
+
+        <section class="panel">
+          <h3>Risultato</h3>
+          <div class="result-box" id="vigResult"></div>
+          <div class="action-row">
+            <button class="ghost" id="vigCopy">COPIA</button>
+            <button class="ghost" id="vigClear">PULISCI</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel vig-explain">
+        <div class="vig-explain-head">
+          <div>
+            <h3>Come lavora la chiave</h3>
+            <p id="vigKeyStatus" class="pig-instruction"></p>
+          </div>
+          <button class="ghost" id="vigToggle">NASCONDI DETTAGLIO</button>
+        </div>
+        <div id="vigDetail" class="vig-detail"></div>
+      </section>
+    `;
+    wireHelp(m);
+
+    const input=$("#vigInput"), key=$("#vigKey"), result=$("#vigResult");
+    let mode="encode";
+
+    const update = () => {
+      const cleanKey = cleanVigenereKey(key.value);
+      if (!cleanKey) {
+        result.innerHTML = '<span class="result-placeholder">Inserisci almeno una lettera nella chiave.</span>';
+        $("#vigKeyStatus").textContent = "La chiave deve contenere almeno una lettera A–Z.";
+        $("#vigDetail").innerHTML = "";
+        return;
+      }
+      const data = vigenereTransform(input.value, cleanKey, mode==="decode");
+      result.textContent = data.text;
+      $("#vigKeyStatus").textContent = `Chiave effettiva: ${data.key} · modalità: ${mode==="decode" ? "decodifica" : "codifica"}`;
+      $("#vigDetail").innerHTML = data.rows.length ? `
+        <div class="vig-row vig-label"><span>TESTO</span>${data.rows.map(r=>`<b>${r.source}</b>`).join("")}</div>
+        <div class="vig-row"><span>CHIAVE</span>${data.rows.map(r=>`<b>${r.key}</b>`).join("")}</div>
+        <div class="vig-row vig-shift"><span>SPOST.</span>${data.rows.map(r=>`<b>${r.shift}</b>`).join("")}</div>
+        <div class="vig-row vig-result-row"><span>RISULT.</span>${data.rows.map(r=>`<b>${r.result}</b>`).join("")}</div>
+      ` : '<div class="empty">Scrivi un messaggio per vedere il procedimento.</div>';
+    };
+
+    $("#vigEncode").onclick=()=>{mode="encode";update();beep(720)};
+    $("#vigDecode").onclick=()=>{mode="decode";update();beep(560)};
+    $("#vigSwap").onclick=()=>{
+      if (!cleanVigenereKey(key.value)) return;
+      input.value=result.textContent;
+      mode=mode==="encode"?"decode":"encode";
+      update();beep(820);
+    };
+    $("#vigCopy").onclick=()=>copyText(result.textContent);
+    $("#vigClear").onclick=()=>{input.value="";result.textContent="";update();beep(430)};
+    $("#vigToggle").onclick=()=>{
+      const detail=$("#vigDetail");
+      detail.hidden=!detail.hidden;
+      $("#vigToggle").textContent=detail.hidden?"MOSTRA DETTAGLIO":"NASCONDI DETTAGLIO";
+      beep(620);
+    };
+    input.oninput=update;
+    key.oninput=update;
     update();
   }
 
