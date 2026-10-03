@@ -93,6 +93,25 @@
       `,
       render: renderPigpen
     },
+    braille: {
+      id:"braille",
+      title:"Braille",
+      short:"BRAILLE",
+      category:"code",
+      icon:"⠿",
+      description:"Sistema di scrittura tattile a sei punti per lettere, numeri e segni.",
+      help:`
+        <h2>Braille italiano a 6 punti</h2>
+        <p>Il Braille è un <strong>sistema di scrittura tattile</strong>, non un cifrario segreto. Ogni cella contiene fino a sei punti disposti in due colonne.</p>
+        <div class="braille-numbering-demo">
+          <div><b>1</b><b>4</b><b>2</b><b>5</b><b>3</b><b>6</b></div>
+          <span>Numerazione dei sei punti</span>
+        </div>
+        <p>CODEX! usa il Braille italiano: comprende le lettere, le vocali accentate à è é ì ò ù, il segnamaiuscole <strong>46</strong>, il segnanumeri <strong>3456</strong> e la punteggiatura più comune.</p>
+        <p>I numeri usano le stesse celle delle lettere A–J, precedute dal segnanumeri.</p>
+      `,
+      render: renderBraille
+    },
     morse: {
       id:"morse",
       title:"Codice Morse",
@@ -214,6 +233,7 @@
       </div>
       <section class="cards">
         ${moduleCard(MODULES.morse)}
+        ${moduleCard(MODULES.braille)}
         ${moduleCard(MODULES.ascii)}
       </section>
     `;
@@ -648,6 +668,331 @@
 
     updateEncoded();
     updateDecoded();
+  }
+
+  const BRAILLE_LETTERS = {
+    a:"1", b:"12", c:"14", d:"145", e:"15", f:"124", g:"1245", h:"125", i:"24", j:"245",
+    k:"13", l:"123", m:"134", n:"1345", o:"135", p:"1234", q:"12345", r:"1235",
+    s:"234", t:"2345", u:"136", v:"1236", w:"2456", x:"1346", y:"13456", z:"1356"
+  };
+  const BRAILLE_ACCENTS = {
+    "à":"12356", "è":"2346", "é":"123456", "ì":"34", "ò":"346", "ù":"23456"
+  };
+  const BRAILLE_PUNCT = {
+    ".":"256", ",":"2", ";":"23", ":":"25", "?":"26", "!":"235",
+    "'":"3", "-":"36", "@":"345", "«":"236", "»":"356", "“":"236", "”":"356",
+    "(":"2356", ")":"2356"
+  };
+  const BRAILLE_CAP = "46";
+  const BRAILLE_NUM = "3456";
+  const BRAILLE_DIGITS = {
+    "1":"1","2":"12","3":"14","4":"145","5":"15",
+    "6":"124","7":"1245","8":"125","9":"24","0":"245"
+  };
+  const BRAILLE_DIGIT_REVERSE = Object.fromEntries(Object.entries(BRAILLE_DIGITS).map(([k,v])=>[v,k]));
+  const BRAILLE_LETTER_REVERSE = Object.fromEntries(Object.entries(BRAILLE_LETTERS).map(([k,v])=>[v,k]));
+  const BRAILLE_ACCENT_REVERSE = Object.fromEntries(Object.entries(BRAILLE_ACCENTS).map(([k,v])=>[v,k]));
+  const BRAILLE_PUNCT_REVERSE = {
+    "256":".", "2":",", "23":";", "25":":", "26":"?", "235":"!",
+    "3":"'", "36":"-", "345":"@", "236":"«", "356":"»", "2356":"("
+  };
+
+  function brailleUnicode(pattern) {
+    if (!pattern) return "\u2800";
+    let mask=0;
+    for (const d of String(pattern)) {
+      const n=+d;
+      if (n>=1 && n<=6) mask |= 1 << (n-1);
+    }
+    return String.fromCodePoint(0x2800 + mask);
+  }
+
+  function brailleCellHtml(pattern, extraClass="") {
+    const p=String(pattern||"");
+    const order=[1,4,2,5,3,6];
+    return `<span class="br-cell ${extraClass}" data-pattern="${p}" aria-label="Punti ${p || "nessuno"}">${order.map(n =>
+      `<i class="${p.includes(String(n)) ? "on" : ""}"></i>`
+    ).join("")}</span>`;
+  }
+
+  function brailleCharPattern(ch) {
+    const lower=ch.toLowerCase();
+    return BRAILLE_LETTERS[lower] || BRAILLE_ACCENTS[lower] || BRAILLE_PUNCT[ch] || null;
+  }
+
+  function encodeBraille(text) {
+    const cells=[];
+    let numberMode=false;
+    let i=0;
+    while(i<text.length){
+      const ch=text[i];
+
+      if (/\d/.test(ch)) {
+        if(!numberMode){ cells.push({pattern:BRAILLE_NUM, role:"num"}); numberMode=true; }
+        cells.push({pattern:BRAILLE_DIGITS[ch], role:"digit", source:ch});
+        i++; continue;
+      }
+      numberMode=false;
+
+      if (/\s/.test(ch)) {
+        cells.push({space:true, source:ch});
+        i++; continue;
+      }
+
+      const lower=ch.toLowerCase();
+      const isSupportedLetter=!!(BRAILLE_LETTERS[lower] || BRAILLE_ACCENTS[lower]);
+      if(isSupportedLetter){
+        const isUpper=ch!==lower && ch===ch.toUpperCase();
+        if(isUpper){
+          let run=1;
+          while(i+run<text.length){
+            const nx=text[i+run], nl=nx.toLowerCase();
+            if(!(BRAILLE_LETTERS[nl] || BRAILLE_ACCENTS[nl]) || nx===nl || nx!==nx.toUpperCase()) break;
+            run++;
+          }
+          if(run>=2){
+            cells.push({pattern:BRAILLE_CAP, role:"cap"});
+            cells.push({pattern:BRAILLE_CAP, role:"cap"});
+            for(let r=0;r<run;r++){
+              const rc=text[i+r];
+              cells.push({pattern:brailleCharPattern(rc), role:"letter", source:rc});
+            }
+            i+=run; continue;
+          } else {
+            cells.push({pattern:BRAILLE_CAP, role:"cap"});
+          }
+        }
+        cells.push({pattern:brailleCharPattern(ch), role:"letter", source:ch});
+        i++; continue;
+      }
+
+      const punct=BRAILLE_PUNCT[ch];
+      if(punct){
+        cells.push({pattern:punct, role:"punct", source:ch});
+      } else {
+        cells.push({unknown:true, source:ch});
+      }
+      i++;
+    }
+    return cells;
+  }
+
+  function brailleCellsToUnicode(cells) {
+    return cells.map(c => c.space ? " " : c.unknown ? c.source : brailleUnicode(c.pattern)).join("");
+  }
+
+  function decodeBrailleCells(cells) {
+    let out="";
+    let capNext=false, capWord=false, numberMode=false;
+    for(let i=0;i<cells.length;i++){
+      const cell=cells[i];
+      if(cell.space){
+        out+=" ";
+        capNext=false; capWord=false; numberMode=false;
+        continue;
+      }
+      const p=cell.pattern;
+      if(!p) continue;
+
+      if(p===BRAILLE_CAP){
+        if(i+1<cells.length && cells[i+1] && cells[i+1].pattern===BRAILLE_CAP){
+          capWord=true; capNext=false; i++;
+        } else {
+          capNext=true;
+        }
+        continue;
+      }
+      if(p===BRAILLE_NUM){
+        numberMode=true;
+        continue;
+      }
+
+      if(numberMode && BRAILLE_DIGIT_REVERSE[p]){
+        out+=BRAILLE_DIGIT_REVERSE[p];
+        continue;
+      }
+      numberMode=false;
+
+      let ch = BRAILLE_ACCENT_REVERSE[p] || BRAILLE_LETTER_REVERSE[p] || BRAILLE_PUNCT_REVERSE[p] || "�";
+      if((capNext || capWord) && /[a-zàèéìòù]/.test(ch)){
+        ch=ch.toUpperCase();
+        capNext=false;
+      }
+      out+=ch;
+      if(!/[a-zA-ZÀÈÉÌÒÙ]/.test(ch)) capWord=false;
+    }
+    return out;
+  }
+
+  function renderBraille() {
+    const m=MODULES.braille;
+    main.innerHTML=moduleHeader(m)+`
+      <div class="workspace braille-workspace">
+        <section class="panel">
+          <h3>Testo → Braille</h3>
+          <label class="field">Testo
+            <textarea id="brText" placeholder="Scrivi qui il testo…">Ciao, perché 2026?</textarea>
+          </label>
+          <div class="braille-render" id="brEncoded"></div>
+          <div class="braille-unicode-line">
+            <span>Unicode</span>
+            <code id="brUnicode"></code>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="brCopyUnicode">COPIA BRAILLE</button>
+            <button class="ghost" id="brClearText">PULISCI</button>
+          </div>
+          <div class="note">In italiano le vocali accentate hanno celle proprie. Le maiuscole sono precedute dal segnamaiuscole e i numeri dal segnanumeri.</div>
+        </section>
+
+        <section class="panel">
+          <h3>Braille → Testo</h3>
+          <p class="pig-instruction">Componi una cella toccando i sei punti, poi premi <strong>AGGIUNGI CELLA</strong>.</p>
+
+          <div class="br-composer-wrap">
+            <div class="br-composer" id="brComposer" aria-label="Compositore cella Braille">
+              ${[1,4,2,5,3,6].map(n=>`<button data-dot="${n}" aria-label="Punto ${n}"><span>${n}</span></button>`).join("")}
+            </div>
+            <div class="br-current">
+              <span>Anteprima</span>
+              <strong id="brCurrentUnicode">⠀</strong>
+              <small id="brCurrentDots">nessun punto</small>
+            </div>
+          </div>
+
+          <div class="action-row br-compose-actions">
+            <button class="primary" id="brAddCell">AGGIUNGI CELLA</button>
+            <button class="ghost" id="brResetCell">AZZERA CELLA</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="brAddSpace">SPAZIO</button>
+            <button class="ghost" id="brAddCap">⠨ MAIUSCOLA</button>
+            <button class="ghost" id="brAddNum">⠼ NUMERO</button>
+            <button class="ghost" id="brBack">⌫</button>
+            <button class="ghost" id="brClearCells">PULISCI</button>
+          </div>
+
+          <h3 style="margin-top:18px">Sequenza</h3>
+          <div class="braille-sequence" id="brSequence"></div>
+
+          <h3 style="margin-top:18px">Testo decodificato</h3>
+          <div class="result-box" id="brDecoded"></div>
+          <div class="action-row">
+            <button class="ghost" id="brCopyDecoded">COPIA</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel braille-reference">
+        <div class="vig-explain-head">
+          <div>
+            <h3>Alfabeto Braille italiano</h3>
+            <p class="pig-instruction">Ogni tessera mostra la cella e i punti attivi. Toccalane una per aggiungerla alla sequenza da decodificare.</p>
+          </div>
+          <button class="ghost" id="brToggleRef">NASCONDI TABELLA</button>
+        </div>
+        <div id="brRefContent">
+          <div class="br-ref-title">Lettere</div>
+          <div class="br-grid">
+            ${Object.entries(BRAILLE_LETTERS).map(([ch,p])=>`
+              <button class="br-ref-item" data-pattern="${p}">
+                <strong>${ch.toUpperCase()}</strong>${brailleCellHtml(p,"small")}<span>${p}</span>
+              </button>`).join("")}
+          </div>
+          <div class="br-ref-title">Vocali accentate</div>
+          <div class="br-grid br-grid-accent">
+            ${Object.entries(BRAILLE_ACCENTS).map(([ch,p])=>`
+              <button class="br-ref-item" data-pattern="${p}">
+                <strong>${ch}</strong>${brailleCellHtml(p,"small")}<span>${p}</span>
+              </button>`).join("")}
+          </div>
+          <div class="br-ref-title">Numeri <small>(dopo ⠼)</small></div>
+          <div class="br-grid br-grid-numbers">
+            ${Object.entries(BRAILLE_DIGITS).map(([ch,p])=>`
+              <button class="br-ref-item br-ref-digit" data-pattern="${p}">
+                <strong>${ch}</strong>${brailleCellHtml(p,"small")}<span>${p}</span>
+              </button>`).join("")}
+          </div>
+        </div>
+      </section>
+    `;
+    wireHelp(m);
+
+    const text=$("#brText"), encoded=$("#brEncoded"), unicode=$("#brUnicode");
+    const sequence=$("#brSequence"), decoded=$("#brDecoded");
+    let manualCells=[];
+    let activeDots=new Set();
+
+    const updateEncoded=()=>{
+      const cells=encodeBraille(text.value);
+      encoded.innerHTML=cells.length ? cells.map(c=>{
+        if(c.space) return '<span class="br-space"></span>';
+        if(c.unknown) return `<span class="br-unknown">${escapeHtml(c.source)}</span>`;
+        return `<span class="br-token ${c.role||""}" title="Punti ${c.pattern}">${brailleCellHtml(c.pattern)}</span>`;
+      }).join("") : '<span class="result-placeholder">Scrivi qualcosa per vedere il Braille.</span>';
+      unicode.textContent=brailleCellsToUnicode(cells);
+    };
+
+    const currentPattern=()=>[1,2,3,4,5,6].filter(n=>activeDots.has(n)).join("");
+
+    const updateComposer=()=>{
+      $("#brComposer button").forEach(btn=>btn.classList.toggle("active",activeDots.has(+btn.dataset.dot)));
+      const p=currentPattern();
+      $("#brCurrentUnicode").textContent=brailleUnicode(p);
+      $("#brCurrentDots").textContent=p ? `punti ${p}` : "nessun punto";
+    };
+
+    const updateManual=()=>{
+      sequence.innerHTML=manualCells.length ? manualCells.map((c,idx)=>{
+        if(c.space) return `<button class="br-seq-space" data-idx="${idx}" title="Spazio">SP</button>`;
+        return `<button class="br-seq-cell" data-idx="${idx}" title="Punti ${c.pattern}">${brailleCellHtml(c.pattern,"small")}</button>`;
+      }).join("") : '<span class="result-placeholder">Nessuna cella inserita.</span>';
+      decoded.textContent=decodeBrailleCells(manualCells);
+      $("#brSequence [data-idx]").forEach(btn=>btn.onclick=()=>{
+        manualCells.splice(+btn.dataset.idx,1);
+        updateManual();beep(470);
+      });
+    };
+
+    $("#brComposer button").forEach(btn=>btn.onclick=()=>{
+      const n=+btn.dataset.dot;
+      if(activeDots.has(n)) activeDots.delete(n); else activeDots.add(n);
+      updateComposer();beep(activeDots.has(n)?720:480);
+    });
+
+    $("#brAddCell").onclick=()=>{
+      const p=currentPattern();
+      if(!p){toast("Seleziona almeno un punto");return;}
+      manualCells.push({pattern:p});
+      activeDots.clear();updateComposer();updateManual();beep(780);
+    };
+    $("#brResetCell").onclick=()=>{activeDots.clear();updateComposer();beep(430)};
+    $("#brAddSpace").onclick=()=>{manualCells.push({space:true});updateManual();beep(520)};
+    $("#brAddCap").onclick=()=>{manualCells.push({pattern:BRAILLE_CAP});updateManual();beep(650)};
+    $("#brAddNum").onclick=()=>{manualCells.push({pattern:BRAILLE_NUM});updateManual();beep(650)};
+    $("#brBack").onclick=()=>{manualCells.pop();updateManual();beep(470)};
+    $("#brClearCells").onclick=()=>{manualCells=[];updateManual();beep(430)};
+    $("#brCopyDecoded").onclick=()=>copyText(decoded.textContent);
+    $("#brCopyUnicode").onclick=()=>copyText(unicode.textContent);
+    $("#brClearText").onclick=()=>{text.value="";updateEncoded();beep(430)};
+    text.oninput=updateEncoded;
+
+    $(".br-ref-item").forEach(btn=>btn.onclick=()=>{
+      if(btn.classList.contains("br-ref-digit") && (manualCells.length===0 || manualCells[manualCells.length-1].pattern!==BRAILLE_NUM)){
+        manualCells.push({pattern:BRAILLE_NUM});
+      }
+      manualCells.push({pattern:btn.dataset.pattern});
+      updateManual();beep(690);
+    });
+
+    $("#brToggleRef").onclick=()=>{
+      const content=$("#brRefContent");
+      content.hidden=!content.hidden;
+      $("#brToggleRef").textContent=content.hidden?"MOSTRA TABELLA":"NASCONDI TABELLA";
+      beep(620);
+    };
+
+    updateEncoded();updateComposer();updateManual();
   }
 
   const MORSE_MAP = {
