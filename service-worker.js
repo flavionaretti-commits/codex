@@ -1,10 +1,11 @@
-const CACHE = "codex-v0.9.0-qrcode";
+const CACHE = "codex-v0.10.0-polybius";
 const CORE = [
   "./",
   "./index.html",
-  "./styles.css?v=090",
+  "./styles.css?v=100",
   "./runtime-fix.js?v=058-pigpen",
   "./app.js?v=058-pigpen",
+  "./polybius.js?v=100",
   "./qrcode.js?v=090",
   "./enigma.js?v=080",
   "./ean13.js?v=070",
