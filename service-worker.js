@@ -1,10 +1,10 @@
-const CACHE = "codex-v0.6.0-pigpen-dots";
+const CACHE = "codex-v0.6.1-caesar-wheel";
 const CORE = [
   "./",
   "./index.html",
-  "./styles.css?v=058-pigpen",
+  "./styles.css?v=061",
   "./runtime-fix.js?v=058-pigpen",
-  "./app.js?v=058-pigpen",\n  "./pigpen-fix.js?v=060-dots",
+  "./app.js?v=058-pigpen",\n  "./caesar-wheel.js?v=061",\n  "./pigpen-fix.js?v=060-dots",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
