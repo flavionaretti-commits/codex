@@ -1,10 +1,11 @@
-const CACHE = "codex-v0.10.0-polybius";
+const CACHE = "codex-v0.11.0-scytale";
 const CORE = [
   "./",
   "./index.html",
-  "./styles.css?v=100",
+  "./styles.css?v=110",
   "./runtime-fix.js?v=058-pigpen",
   "./app.js?v=058-pigpen",
+  "./scytale.js?v=110",
   "./polybius.js?v=100",
   "./qrcode.js?v=090",
   "./enigma.js?v=080",
