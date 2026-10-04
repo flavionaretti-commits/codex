@@ -32,9 +32,23 @@
       ];
       lines = shapes[m.pos];
     }
-    const dot = m.dotted
-      ? '<circle cx="18" cy="18" r="2.7" fill="currentColor" stroke="none"/>'
-      : "";
+    let dot = "";
+    if (m.dotted) {
+      if (m.kind === "grid") {
+        dot = '<circle cx="18" cy="18" r="2.7" fill="currentColor" stroke="none"/>';
+      } else {
+        // Put the dot inside the open sector of each X-shaped symbol,
+        // away from the central vertex so it stays clearly visible.
+        const dotPositions = [
+          [18, 10], // ∨ : above the vertex
+          [26, 18], // < : to the right
+          [18, 26], // ∧ : below the vertex
+          [10, 18]  // > : to the left
+        ];
+        const [cx, cy] = dotPositions[m.pos];
+        dot = '<circle cx="' + cx + '" cy="' + cy + '" r="2.7" fill="currentColor" stroke="none"/>';
+      }
+    }
     return '<svg class="' + cls + '" viewBox="0 0 36 36" aria-hidden="true">' +
       '<g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
       lines + '</g>' + dot + '</svg>';
@@ -82,6 +96,15 @@
       '<button class="pig-key" data-letter="' + ch + '" aria-label="Simbolo Pigpen">' +
       svg(ch, "pig-glyph key") + '</button>'
     ).join("");
+
+    // Keep the reference alphabet visually identical to keyboard/output.
+    const alphabetGrid = document.querySelector("#pigAlphabetPanel .pig-alphabet");
+    if (alphabetGrid) {
+      alphabetGrid.innerHTML = [...ALPHABET].map(ch =>
+        '<div class="pig-alpha-item"><span>' + ch + '</span>' +
+        svg(ch, "pig-glyph large") + '</div>'
+      ).join("");
+    }
 
     keyboard.querySelectorAll(".pig-key").forEach(btn => {
       btn.addEventListener("click", () => {
