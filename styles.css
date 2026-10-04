@@ -609,3 +609,124 @@ tr:last-child td{border-bottom:0}
   .ean-number-input{font-size:18px}
   .ean-number-big{font-size:18px}
 }
+\n
+/* ENIGMA */
+.enigma-card-icon{
+  width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle,var(--panel) 0 31%,var(--accent-2) 33% 42%,transparent 44%);
+  font-size:35px!important;line-height:1
+}
+.en-settings{margin-bottom:18px}
+.en-settings-head{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-bottom:14px}
+.en-settings-head>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.en-settings-head h3{margin:0}
+.en-settings-head label{font-size:12px;font-weight:900;color:var(--muted)}
+.en-settings-head select{width:90px;margin:5px 0 0;padding:9px}
+.en-setting-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.en-setting-card{
+  padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--bg)
+}
+.en-setting-card>strong{display:block;margin-bottom:10px;color:var(--accent)}
+.en-setting-card label{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted);margin:6px 0}
+.en-setting-card select{margin:0;padding:8px 9px}
+.en-plug-field{margin-top:14px!important}
+.en-plug-visual{display:flex;flex-wrap:wrap;gap:7px;min-height:31px;margin-top:-5px}
+.en-plug-visual span{
+  border-radius:999px;padding:6px 10px;background:var(--panel-2);border:1px solid var(--line);
+  font:900 12px/1 monospace;color:var(--accent-2)
+}
+.en-plug-visual em{color:var(--muted);font-size:12px}
+.en-config-status{margin-top:11px;padding:9px 12px;border-radius:10px;background:var(--panel-2);color:var(--muted);font-size:12px}
+.en-config-status.ok{border-left:4px solid var(--ok);color:var(--ok)}
+.en-config-status.error{border-left:4px solid var(--danger);color:var(--danger)}
+
+.en-machine{
+  padding:22px;border-radius:24px;border:1px solid #3d3225;
+  background:linear-gradient(145deg,#1d1914,#33291f 55%,#17130f);
+  box-shadow:0 18px 38px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);
+  color:#ead9b9;margin-bottom:18px
+}
+.en-rotor-bank{display:flex;justify-content:center;gap:16px;margin-bottom:22px}
+.en-rotor-live{
+  width:min(170px,29%);padding:12px 10px;border-radius:14px;text-align:center;
+  background:linear-gradient(#6b6155,#332e29);border:1px solid #837665;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.55),0 3px 8px rgba(0,0,0,.3)
+}
+.en-rotor-live>small{display:block;font-size:9px;letter-spacing:.1em;color:#cbbda5}
+.en-live-name{display:block;font:800 16px Georgia,serif;color:#f2dfb8;margin:4px 0}
+.en-window{
+  width:58px;height:67px;margin:5px auto 7px;border-radius:8px;display:grid;place-items:center;
+  background:#eee1bd;color:#211a13;font:900 38px/1 Georgia,serif;
+  border:5px solid #211b16;box-shadow:inset 0 4px 9px rgba(0,0,0,.3),0 0 0 1px #9b8a6c;
+  transition:transform .12s ease,background .12s ease
+}
+.en-window.stepped{animation:enStep .22s ease}
+@keyframes enStep{50%{transform:translateY(-5px);background:#fff5ce}}
+.en-notch,.en-ring-live,.en-start-live{display:block;font-size:9px;color:#baa98e;line-height:1.45}
+
+.en-machine-label{text-align:center;font:800 10px/1 Georgia,serif;letter-spacing:.22em;color:#9f8b69;margin-bottom:8px}
+.en-lampboard,.en-keyboard{max-width:760px;margin:0 auto}
+.en-keyboard{margin-top:24px}
+.en-key-row{display:flex;justify-content:center;gap:9px;margin:8px 0}
+.en-lamp,.en-key{
+  width:52px;height:52px;border-radius:50%;display:grid;place-items:center;
+  font:900 20px/1 Georgia,serif
+}
+.en-lamp{
+  border:3px solid #4c4032;background:#15120f;color:#9e8c70;
+  box-shadow:inset 0 0 12px #000
+}
+.en-lamp.on{
+  background:#ffe98e;color:#211700;border-color:#d9b84f;
+  box-shadow:0 0 12px #ffd84f,0 0 35px rgba(255,210,70,.78),inset 0 0 10px #fff4b6
+}
+.en-key{
+  border:3px solid #0d0b09;background:radial-gradient(circle at 42% 35%,#4a433b,#171412 68%);
+  color:#efe3cb;cursor:pointer;box-shadow:0 5px 0 #080706,0 7px 9px rgba(0,0,0,.4)
+}
+.en-key:active{transform:translateY(4px);box-shadow:0 1px 0 #080706}
+
+.en-tapes{margin-bottom:18px}
+.en-tape-head{display:flex;align-items:center;justify-content:space-between}
+.en-tape-head h3{margin:0 0 12px}
+.en-tape-head span{font-size:11px;color:var(--muted)}
+.en-tape-row{
+  display:grid;grid-template-columns:54px 1fr;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;margin:8px 0;min-height:56px;background:var(--bg)
+}
+.en-tape-row>b{display:grid;place-items:center;background:var(--panel-2);color:var(--muted);font-size:11px}
+.en-tape-row>div{padding:14px;font:900 20px/1.45 "SFMono-Regular",Consolas,monospace;letter-spacing:.09em;overflow-wrap:anywhere}
+.en-tape-row.output>div{color:var(--accent)}
+
+.en-batch{margin-bottom:18px}
+.en-path-panel{overflow:hidden}
+.en-path{display:flex;align-items:center;gap:5px;overflow-x:auto;padding:10px 2px 4px}
+.en-path-node{
+  flex:0 0 auto;min-width:62px;padding:8px 7px;border:1px solid var(--line);border-radius:10px;
+  background:var(--bg);text-align:center
+}
+.en-path-node small{display:block;font-size:8px;color:var(--muted);white-space:nowrap}
+.en-path-node b{font:900 19px/1.2 Georgia,serif;color:var(--accent-2)}
+.en-path-node:first-child b,.en-path-node:last-child b{color:var(--accent)}
+.en-path-arrow{color:var(--muted);font-size:22px;flex:0 0 auto}
+
+@media(max-width:780px){
+  .en-setting-grid{grid-template-columns:1fr}
+  .en-setting-card{display:grid;grid-template-columns:1fr repeat(3,minmax(0,1fr));gap:8px;align-items:center}
+  .en-setting-card>strong{margin:0}
+  .en-setting-card label{display:block;margin:0}
+  .en-setting-card select{width:100%;margin-top:3px}
+  .en-key-row{gap:5px}
+  .en-lamp,.en-key{width:43px;height:43px;font-size:16px}
+}
+@media(max-width:540px){
+  .en-settings-head{align-items:flex-start}
+  .en-setting-card{display:block}
+  .en-setting-card label{display:grid;grid-template-columns:1fr 1fr;margin:6px 0}
+  .en-machine{padding:15px 7px}
+  .en-rotor-bank{gap:6px}
+  .en-rotor-live{width:32%;padding:8px 4px}
+  .en-window{width:48px;height:57px;font-size:31px}
+  .en-key-row{gap:3px}
+  .en-lamp,.en-key{width:34px;height:34px;font-size:13px;border-width:2px}
+}
