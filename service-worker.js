@@ -1,10 +1,10 @@
-const CACHE = "codex-v0.7.0-ean13";
+const CACHE = "codex-v0.8.0-enigma";
 const CORE = [
   "./",
   "./index.html",
-  "./styles.css?v=070",
+  "./styles.css?v=080",
   "./runtime-fix.js?v=058-pigpen",
-  "./app.js?v=058-pigpen",\n  "./ean13.js?v=070",\n  "./caesar-wheel.js?v=061",\n  "./pigpen-fix.js?v=060-dots",
+  "./app.js?v=058-pigpen",\n  "./enigma.js?v=080",\n  "./ean13.js?v=070",\n  "./caesar-wheel.js?v=061",\n  "./pigpen-fix.js?v=060-dots",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
