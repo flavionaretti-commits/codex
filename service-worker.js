@@ -1,4 +1,4 @@
-const CACHE = "codex-v0.12.0-playfair";
+const CACHE = "codex-v0.12.1-pages-redeploy";
 const CORE = [
   "./",
   "./index.html",
