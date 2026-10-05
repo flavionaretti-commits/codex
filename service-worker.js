@@ -1,10 +1,11 @@
-const CACHE = "codex-v0.11.0-scytale";
+const CACHE = "codex-v0.12.0-playfair";
 const CORE = [
   "./",
   "./index.html",
-  "./styles.css?v=110",
+  "./styles.css?v=120",
   "./runtime-fix.js?v=058-pigpen",
   "./app.js?v=058-pigpen",
+  "./playfair.js?v=120",
   "./scytale.js?v=110",
   "./polybius.js?v=100",
   "./qrcode.js?v=090",
