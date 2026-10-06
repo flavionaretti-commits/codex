@@ -27,7 +27,7 @@
       title:"Griglie, simboli e società iniziatiche",
       text:"Le origini precise del Pigpen non sono certe. Vari cifrari geometrici simili compaiono tra Settecento e Ottocento e il sistema divenne particolarmente associato alla Massoneria. Le lettere vengono sostituite da frammenti di griglie e croci, con punti per distinguere una seconda serie di simboli."
     },
-    "braille italiano a 6 punti": {
+    "braille": {
       era:"1820–1830",
       title:"Louis Braille e la lettura tattile",
       text:"Louis Braille sviluppò il suo sistema da adolescente, ispirandosi anche alla scrittura notturna di Charles Barbier. La prima versione fu pubblicata nel 1829 e poi perfezionata. Le celle a sei punti permisero una lettura e scrittura tattile rapida e sono alla base del Braille usato ancora oggi in tutto il mondo."

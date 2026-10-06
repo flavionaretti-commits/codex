@@ -1,11 +1,11 @@
-const CACHE = "codex-v0.13.0-history";
+const CACHE = "codex-v0.13.1-braille-history";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css?v=120",
   "./runtime-fix.js?v=058-pigpen",
   "./app.js?v=058-pigpen",
-  "./history.js?v=130",
+  "./history.js?v=131",
   "./playfair.js?v=120",
   "./scytale.js?v=110",
   "./polybius.js?v=100",
