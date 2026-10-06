@@ -37,6 +37,11 @@
       title:"Louis Braille e la lettura tattile",
       text:"Louis Braille sviluppò il suo sistema da adolescente, ispirandosi anche alla scrittura notturna di Charles Barbier. La prima versione fu pubblicata nel 1829 e poi perfezionata. Le celle a sei punti permisero una lettura e scrittura tattile rapida e sono alla base del Braille usato ancora oggi in tutto il mondo."
     },
+    "alfabeto fonetico nato": {
+      era:"1956",
+      title:"Un alfabeto universale per la radio",
+      text:"L’attuale alfabeto radiotelefonico fu messo a punto attraverso il lavoro di ICAO, IATA, NATO e altre organizzazioni internazionali. La versione definitiva entrò in vigore il 1º marzo 1956. Parole come Alfa, Bravo e Charlie furono scelte e testate per restare distinguibili anche con rumore, interferenze e accenti diversi. Dalla comunicazione militare e aeronautica si è poi diffuso nella navigazione, nei radioamatori e in molti usi civili."
+    },
     "codice morse": {
       era:"1830–1840",
       title:"Il linguaggio del telegrafo",

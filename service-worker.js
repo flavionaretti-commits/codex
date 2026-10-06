@@ -1,12 +1,13 @@
-const CACHE = "codex-v0.14.0-rot13";
+const CACHE = "codex-v0.15.0-nato";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css?v=120",
   "./runtime-fix.js?v=058-pigpen",
   "./app.js?v=058-pigpen",
+  "./nato-phonetic.js?v=150",
   "./rot13.js?v=140",
-  "./history.js?v=140",
+  "./history.js?v=150",
   "./playfair.js?v=120",
   "./scytale.js?v=110",
   "./polybius.js?v=100",
