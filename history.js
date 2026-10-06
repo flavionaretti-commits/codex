@@ -2,6 +2,11 @@
   "use strict";
 
   const STORIES = {
+    "rot13": {
+      era:"Anni 1980",
+      title:"Lo spoiler-cipher di Usenet",
+      text:"ROT13 è una variante fissa del cifrario di Cesare: ogni lettera viene spostata di 13 posizioni. Divenne particolarmente popolare su Usenet negli anni Ottanta, dove veniva usato per nascondere spoiler, soluzioni, battute o testi che il lettore poteva scegliere di rivelare. Non nasce come cifrario sicuro: il suo scopo è soprattutto rendere un testo non immediatamente leggibile."
+    },
     "cifrario di cesare": {
       era:"I secolo a.C.",
       title:"Dalla Roma di Cesare",
