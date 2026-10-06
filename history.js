@@ -141,8 +141,7 @@
         '<div class="history-sheet">' +
         '<div class="history-era">◷ ' + story.era + '</div>' +
         '<h2>' + story.title + '</h2>' +
-        '<p>' + story.text + '</p>' +
-        '<div class="history-note">Scheda storica sintetica: contesto essenziale, senza appesantire il modulo.</div>' +
+        '<p>' + story.text + '</p>'
         '</div>';
       dialog.showModal();
     };
