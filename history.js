@@ -2,6 +2,11 @@
   "use strict";
 
   const STORIES = {
+    "cifrario di bacone": {
+      era:"1605",
+      title:"Due forme per nascondere un messaggio",
+      text:"Francis Bacon descrisse nel 1605 un alfabeto bilitterale basato su due soli stati, oggi indicati di solito come A e B. L’idea più originale era steganografica: la sequenza poteva essere nascosta in un testo apparentemente normale usando due forme tipografiche diverse. Ogni lettera segreta occupa cinque posizioni. Bacon tornò sul sistema anche nel De Augmentis Scientiarum del 1623. Il metodo è interessante perché la struttura a due simboli ricorda da vicino una codifica binaria."
+    },
     "rot13": {
       era:"Anni 1980",
       title:"Lo spoiler-cipher di Usenet",
