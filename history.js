@@ -2,6 +2,11 @@
   "use strict";
 
   const STORIES = {
+    "cifrario a staccionata": {
+      era:"XIX secolo circa",
+      title:"Lo zig-zag dei cifrari a trasposizione",
+      text:"La Rail Fence, o cifrario a staccionata, è un semplice cifrario di trasposizione di origine incerta, senza un inventore universalmente riconosciuto. Il principio di riordinare le lettere ha radici molto più antiche, come mostra la scitala greca, ma la forma moderna a zig-zag divenne soprattutto un classico dei cifrari carta e penna e dei manuali di crittografia. Oggi è usata soprattutto per insegnare la differenza fra trasposizione e sostituzione."
+    },
     "cifrario di bacone": {
       era:"1605",
       title:"Due forme per nascondere un messaggio",

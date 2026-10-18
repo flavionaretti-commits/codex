@@ -1,14 +1,15 @@
-const CACHE = "codex-v0.16.0-bacon";
+const CACHE = "codex-v0.17.0-rail-fence";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css?v=120",
   "./runtime-fix.js?v=058-pigpen",
   "./app.js?v=058-pigpen",
+  "./rail-fence.js?v=170",
   "./bacon.js?v=160",
   "./nato-phonetic.js?v=150",
   "./rot13.js?v=140",
-  "./history.js?v=160",
+  "./history.js?v=170",
   "./playfair.js?v=120",
   "./scytale.js?v=110",
   "./polybius.js?v=100",
