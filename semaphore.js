@@ -156,6 +156,14 @@
     document.head.appendChild(s);
   }
 
+  function historyHtml(){
+    return '<h2>Il telegrafo umano con due bandiere</h2>'+
+      '<div class="history-era">◷ 1866 · XIX secolo</div>'+
+      '<p>Il semaphore a bandiere nacque nel XIX secolo come versione portatile dei precedenti telegrafi ottici a bracci mobili; la forma a bandiere manuali viene fatta risalire al 1866.</p>'+
+      '<p>Divenne particolarmente utile nella comunicazione marittima tra nave e nave o tra nave e costa: ogni lettera viene riconosciuta dalla posizione delle due braccia.</p>'+
+      '<p>Una curiosità celebre: nel 1958 Gerald Holtom costruì il simbolo del disarmo nucleare ☮ sovrapponendo graficamente le pose semaphore delle lettere <strong>N</strong> e <strong>D</strong>, iniziali di <em>Nuclear Disarmament</em>.</p>';
+  }
+
   function helpHtml(){
     return '<h2>Semaphore a bandiere</h2>'+
       '<p>Il semaphore comunica lettere tramite la <strong>posizione di due bandiere</strong>. Chi riceve legge i segnali guardando frontalmente il segnalatore.</p>'+
@@ -188,7 +196,7 @@
       '<div class="eyebrow">Codice e rappresentazione · comunicazione visiva</div>'+
       '<h2>Semaphore</h2>'+
       '<p>Due bandiere, otto direzioni e un intero alfabeto da vedere in movimento.</p>'+
-      '</div><button class="help-btn" id="semHelp">? COME FUNZIONA</button></div>'+
+      '</div><div class="module-actions"><button class="help-btn" id="semHelp">? COME FUNZIONA</button><button class="help-btn history-btn" id="semHistory">◷ STORIA</button></div></div>'+
 
       '<div class="workspace sem-workspace">'+
         '<section class="panel"><h3>Testo → semaphore</h3>'+
@@ -377,6 +385,12 @@
       const content=document.querySelector("#helpContent");
       const dialog=document.querySelector("#helpDialog");
       if(content&&dialog){content.innerHTML=helpHtml();dialog.showModal();}
+    };
+
+    document.querySelector("#semHistory").onclick=()=>{
+      const content=document.querySelector("#helpContent");
+      const dialog=document.querySelector("#helpDialog");
+      if(content&&dialog){content.innerHTML=historyHtml();dialog.showModal();}
     };
 
     updateSequence();
