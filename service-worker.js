@@ -1,10 +1,10 @@
-const CACHE = "codex-v0.17.0-rail-fence";
+const CACHE = "codex-v0.18.0-semaphore";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css?v=120",
   "./runtime-fix.js?v=058-pigpen",
-  "./app.js?v=058-pigpen",
+  "./app.js?v=058-pigpen",\n  "./semaphore.js?v=180",
   "./rail-fence.js?v=170",
   "./bacon.js?v=160",
   "./nato-phonetic.js?v=150",

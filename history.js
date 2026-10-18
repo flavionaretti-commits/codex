@@ -47,6 +47,11 @@
       title:"Louis Braille e la lettura tattile",
       text:"Louis Braille sviluppò il suo sistema da adolescente, ispirandosi anche alla scrittura notturna di Charles Barbier. La prima versione fu pubblicata nel 1829 e poi perfezionata. Le celle a sei punti permisero una lettura e scrittura tattile rapida e sono alla base del Braille usato ancora oggi in tutto il mondo."
     },
+    "semaphore": {
+      era:"1866 · XIX secolo",
+      title:"Il telegrafo umano con due bandiere",
+      text:"Il semaphore a bandiere nacque nel XIX secolo come versione portatile dei precedenti telegrafi ottici a bracci mobili; la forma a bandiere manuali viene fatta risalire al 1866. Divenne molto usato nella comunicazione marittima tra nave e nave o tra nave e costa. Ogni lettera è definita dalla posizione delle due braccia. Una curiosità celebre: nel 1958 Gerald Holtom costruì il simbolo del disarmo nucleare sovrapponendo le pose semaphore delle lettere N e D."
+    },
     "alfabeto fonetico nato": {
       era:"1956",
       title:"Un alfabeto universale per la radio",
