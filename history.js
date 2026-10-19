@@ -2,6 +2,11 @@
   "use strict";
 
   const STORIES = {
+    "adfgx": {
+      era:"1918 · Prima guerra mondiale",
+      title:"Il cifrario dei radiotelegrafisti tedeschi",
+      text:"ADFGX fu ideato dall’ufficiale tedesco Fritz Nebel e impiegato dal 1º marzo 1918 sul fronte occidentale. Univa una scacchiera di Polibio a una trasposizione colonnare. Le lettere A, D, F, G e X furono scelte perché risultano ben distinguibili in Morse. Il crittoanalista francese Georges Painvin riuscì a violarlo nel 1918. Dal 1º giugno arrivò la variante ADFGVX, estesa a una griglia 6×6 con anche le cifre."
+    },
     "cifrario a staccionata": {
       era:"XIX secolo circa",
       title:"Lo zig-zag dei cifrari a trasposizione",

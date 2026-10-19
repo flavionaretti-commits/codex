@@ -1,10 +1,10 @@
-const CACHE = "codex-v0.18.1-semaphore-history";
+const CACHE = "codex-v0.19.0-adfgx";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css?v=120",
   "./runtime-fix.js?v=058-pigpen",
-  "./app.js?v=058-pigpen",\n  "./semaphore.js?v=181",
+  "./app.js?v=058-pigpen",\n  "./adfgx.js?v=190",\n  "./semaphore.js?v=181",
   "./rail-fence.js?v=170",
   "./bacon.js?v=160",
   "./nato-phonetic.js?v=150",
